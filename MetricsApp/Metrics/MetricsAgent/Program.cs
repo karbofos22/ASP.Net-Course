@@ -1,5 +1,11 @@
+using MetricsAgent.Models;
+using MetricsAgent.Services;
+using MetricsAgent.Services.Implementations;
+using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
+using NLog.Web;
+using System.Data.SQLite;
 
 namespace MetricsAgent
 {
@@ -9,7 +15,31 @@ namespace MetricsAgent
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+            #region Configure logging
+
+            builder.Host.ConfigureLogging(logging =>
+            {
+                logging.ClearProviders();
+                logging.AddConsole();
+
+            }).UseNLog(new NLogAspNetCoreOptions() { RemoveLoggerFactoryFilter = true });
+
+            builder.Services.AddHttpLogging(logging =>
+            {
+                logging.LoggingFields = HttpLoggingFields.All | HttpLoggingFields.RequestQuery;
+                logging.RequestBodyLogLimit = 4096;
+                logging.ResponseBodyLogLimit = 4096;
+                logging.RequestHeaders.Add("Authorization");
+                logging.RequestHeaders.Add("X-Real-IP");
+                logging.RequestHeaders.Add("X-Forwarded-For");
+            });
+
+            #endregion
+
+            builder.Services.AddScoped<ICpuMetricsRepository, CpuMetricsRepository>();
+
+            //ConfigureSqlLiteConnection();
+
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -18,7 +48,7 @@ namespace MetricsAgent
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "MetricsAgent", Version = "v1" });
 
-                // Поддержка TimeSpan
+                // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ TimeSpan
                 c.MapType<TimeSpan>(() => new OpenApiSchema
                 {
                     Type = "string",
@@ -36,11 +66,36 @@ namespace MetricsAgent
             }
 
             app.UseAuthorization();
-
+            app.UseHttpLogging();
 
             app.MapControllers();
 
             app.Run();
+        }
+
+        private static void ConfigureSqlLiteConnection()
+        {
+            const string connectionString = "Data Source = metrics.db; Version = 3; Pooling = true; Max Pool Size = 100;";
+            var connection = new SQLiteConnection(connectionString);
+            connection.Open();
+            PrepareSchema(connection);
+        }
+
+        private static void PrepareSchema(SQLiteConnection connection)
+        {
+            using (var command = new SQLiteCommand(connection))
+            {
+                //пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+                // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+                command.CommandText = "DROP TABLE IF EXISTS cpumetrics";
+                // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+                command.ExecuteNonQuery();
+                command.CommandText =
+                    @"CREATE TABLE cpumetrics(id INTEGER
+                    PRIMARY KEY,
+                    value INT, time INT)";
+                command.ExecuteNonQuery();
+            }
         }
     }
 }

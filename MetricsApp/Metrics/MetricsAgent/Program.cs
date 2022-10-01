@@ -37,6 +37,10 @@ namespace MetricsAgent
             #endregion
 
             builder.Services.AddScoped<ICpuMetricsRepository, CpuMetricsRepository>();
+            builder.Services.AddScoped<IDotnetMetricsRepository, DotnetMetricsRepository>();
+            builder.Services.AddScoped<IHddMetricsRepository, HddMetricsRepository>();
+            builder.Services.AddScoped<IRamMetricsRepository, RamMetricsRepository>();
+            builder.Services.AddScoped<INetworkMetricsRepository, NetworkMetricsRepository>();
 
             //ConfigureSqlLiteConnection();
 
@@ -48,7 +52,7 @@ namespace MetricsAgent
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "MetricsAgent", Version = "v1" });
 
-                // ��������� TimeSpan
+                // Поддержка TimeSpan
                 c.MapType<TimeSpan>(() => new OpenApiSchema
                 {
                     Type = "string",
@@ -85,13 +89,29 @@ namespace MetricsAgent
         {
             using (var command = new SQLiteCommand(connection))
             {
-                //����� ����� ����� ������� ��� ����������
-                // ������� ������� � ���������, ���� ��� ���� � ���� ������
+                //Задаём новый текст команды для выполнения
+                // Удаляем таблицу с метриками, если она есть в базе данных
                 command.CommandText = "DROP TABLE IF EXISTS cpumetrics";
-                // ���������� ������ � ���� ������
+                // Отправляем запрос в базу данных
                 command.ExecuteNonQuery();
                 command.CommandText =
                     @"CREATE TABLE cpumetrics(id INTEGER
+                    PRIMARY KEY,
+                    value INT, time INT)";
+                command.CommandText =
+                    @"CREATE TABLE dotnetmetrics(id INTEGER
+                    PRIMARY KEY,
+                    value INT, time INT)";
+                command.CommandText =
+                    @"CREATE TABLE hddmetrics(id INTEGER
+                    PRIMARY KEY,
+                    value INT, time INT)";
+                command.CommandText =
+                    @"CREATE TABLE networkmetrics(id INTEGER
+                    PRIMARY KEY,
+                    value INT, time INT)";
+                command.CommandText =
+                    @"CREATE TABLE rammetrics(id INTEGER
                     PRIMARY KEY,
                     value INT, time INT)";
                 command.ExecuteNonQuery();

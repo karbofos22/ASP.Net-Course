@@ -1,3 +1,6 @@
+using AutoMapper;
+using Dapper;
+using MetricsAgent.Mappings;
 using MetricsAgent.Models;
 using MetricsAgent.Services;
 using MetricsAgent.Services.Implementations;
@@ -13,7 +16,27 @@ namespace MetricsAgent
     {
         public static void Main(string[] args)
         {
+
+
             var builder = WebApplication.CreateBuilder(args);
+
+            #region Configure Mapping
+
+            var mapperConfiguration = new MapperConfiguration(mp => mp.AddProfile(new
+                MapperProfile()));
+            var mapper = mapperConfiguration.CreateMapper();
+            builder.Services.AddSingleton(mapper);
+
+            #endregion
+
+            #region Configure Options
+
+            builder.Services.Configure<DatabaseOptions>(options =>
+            {
+                builder.Configuration.GetSection("Settings:DatabaseOptions").Bind(options);
+            });
+
+            #endregion
 
             #region Configure logging
 
@@ -36,13 +59,15 @@ namespace MetricsAgent
 
             #endregion
 
+            #region Configure Repos
             builder.Services.AddScoped<ICpuMetricsRepository, CpuMetricsRepository>();
             builder.Services.AddScoped<IDotnetMetricsRepository, DotnetMetricsRepository>();
             builder.Services.AddScoped<IHddMetricsRepository, HddMetricsRepository>();
             builder.Services.AddScoped<IRamMetricsRepository, RamMetricsRepository>();
             builder.Services.AddScoped<INetworkMetricsRepository, NetworkMetricsRepository>();
+            #endregion
 
-            //ConfigureSqlLiteConnection();
+            //ConfigureSqlLiteDb();
 
 
             builder.Services.AddControllers();
@@ -77,45 +102,33 @@ namespace MetricsAgent
             app.Run();
         }
 
-        private static void ConfigureSqlLiteConnection()
+        private static void ConfigureSqlLiteDb()
         {
             const string connectionString = "Data Source = metrics.db; Version = 3; Pooling = true; Max Pool Size = 100;";
-            var connection = new SQLiteConnection(connectionString);
-            connection.Open();
-            PrepareSchema(connection);
-        }
+            var cmd = new SQLiteConnection(connectionString);
 
-        private static void PrepareSchema(SQLiteConnection connection)
-        {
-            using (var command = new SQLiteCommand(connection))
-            {
-                //Задаём новый текст команды для выполнения
-                // Удаляем таблицу с метриками, если она есть в базе данных
-                command.CommandText = "DROP TABLE IF EXISTS cpumetrics";
-                // Отправляем запрос в базу данных
-                command.ExecuteNonQuery();
-                command.CommandText =
-                    @"CREATE TABLE cpumetrics(id INTEGER
+            // Дропнуть таблицу если такая уже существует
+            cmd.Execute("DROP TABLE IF EXISTS cpumetrics");
+            cmd.Execute("DROP TABLE IF EXISTS dotnetmetrics");
+            cmd.Execute("DROP TABLE IF EXISTS hddmetrics");
+            cmd.Execute("DROP TABLE IF EXISTS networkmetrics");
+            cmd.Execute("DROP TABLE IF EXISTS rammetrics");
+            //Создать таблицу
+            cmd.Execute(@"CREATE TABLE cpumetrics(id INTEGER
                     PRIMARY KEY,
-                    value INT, time INT)";
-                command.CommandText =
-                    @"CREATE TABLE dotnetmetrics(id INTEGER
+                    value INT, time INT)");
+            cmd.Execute(@"CREATE TABLE dotnetmetrics(id INTEGER
                     PRIMARY KEY,
-                    value INT, time INT)";
-                command.CommandText =
-                    @"CREATE TABLE hddmetrics(id INTEGER
+                    value INT, time INT)");
+            cmd.Execute(@"CREATE TABLE hddmetrics(id INTEGER
                     PRIMARY KEY,
-                    value INT, time INT)";
-                command.CommandText =
-                    @"CREATE TABLE networkmetrics(id INTEGER
+                    value INT, time INT)");
+            cmd.Execute(@"CREATE TABLE networkmetrics(id INTEGER
                     PRIMARY KEY,
-                    value INT, time INT)";
-                command.CommandText =
-                    @"CREATE TABLE rammetrics(id INTEGER
+                    value INT, time INT)");
+            cmd.Execute(@"CREATE TABLE rammetrics(id INTEGER
                     PRIMARY KEY,
-                    value INT, time INT)";
-                command.ExecuteNonQuery();
-            }
+                    value INT, time INT)");
         }
     }
 }

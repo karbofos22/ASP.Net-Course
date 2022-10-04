@@ -98,8 +98,8 @@ namespace MetricsAgent
             builder.Services.AddSingleton<RamMetricJob>();
             builder.Services.AddSingleton(new JobSchedule(typeof(RamMetricJob), "0/5 * * ? * * *"));
 
-            //builder.Services.AddSingleton<DontnetMetricJob>();
-            //builder.Services.AddSingleton(new JobSchedule(typeof(DontnetMetricJob), "0/5 * * ? * * *"));
+            builder.Services.AddSingleton<DontnetMetricJob>();
+            builder.Services.AddSingleton(new JobSchedule(typeof(DontnetMetricJob), "0/5 * * ? * * *"));
 
             builder.Services.AddSingleton<NetworkMetricJob>();
             builder.Services.AddSingleton(new JobSchedule(typeof(NetworkMetricJob), "0/15 * * ? * * *"));

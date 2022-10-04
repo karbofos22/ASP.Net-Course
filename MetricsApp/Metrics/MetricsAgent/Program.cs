@@ -1,14 +1,23 @@
 using AutoMapper;
 using Dapper;
+using FluentMigrator.Runner;
+using FluentMigrator.Runner.Initialization;
+using MetricsAgent.Jobs;
 using MetricsAgent.Mappings;
 using MetricsAgent.Models;
 using MetricsAgent.Services;
 using MetricsAgent.Services.Implementations;
 using Microsoft.AspNetCore.HttpLogging;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using NLog.Web;
+using Quartz;
+using Quartz.Impl;
+using Quartz.Spi;
 using System.Data.SQLite;
+using System.Diagnostics;
 
 namespace MetricsAgent
 {
@@ -16,7 +25,6 @@ namespace MetricsAgent
     {
         public static void Main(string[] args)
         {
-
 
             var builder = WebApplication.CreateBuilder(args);
 
@@ -38,7 +46,7 @@ namespace MetricsAgent
 
             #endregion
 
-            #region Configure logging
+            #region Configure Logging
 
             builder.Host.ConfigureLogging(logging =>
             {
@@ -60,15 +68,44 @@ namespace MetricsAgent
             #endregion
 
             #region Configure Repos
-            builder.Services.AddScoped<ICpuMetricsRepository, CpuMetricsRepository>();
-            builder.Services.AddScoped<IDotnetMetricsRepository, DotnetMetricsRepository>();
-            builder.Services.AddScoped<IHddMetricsRepository, HddMetricsRepository>();
-            builder.Services.AddScoped<IRamMetricsRepository, RamMetricsRepository>();
-            builder.Services.AddScoped<INetworkMetricsRepository, NetworkMetricsRepository>();
+            builder.Services.AddSingleton<ICpuMetricsRepository, CpuMetricsRepository>();
+            builder.Services.AddSingleton<IDotnetMetricsRepository, DotnetMetricsRepository>();
+            builder.Services.AddSingleton<IHddMetricsRepository, HddMetricsRepository>();
+            builder.Services.AddSingleton<IRamMetricsRepository, RamMetricsRepository>();
+            builder.Services.AddSingleton<INetworkMetricsRepository, NetworkMetricsRepository>();
+
             #endregion
 
-            //ConfigureSqlLiteDb();
+            #region Configure Services
 
+            //Fluent migration framework 
+            builder.Services.AddFluentMigratorCore()
+                .ConfigureRunner(rb => rb
+                .AddSQLite()
+                .ScanIn(typeof(Program).Assembly).For.Migrations()
+                .WithGlobalConnectionString(builder.Configuration.GetSection("Settings:DatabaseOptions:ConnectionString").Value));
+
+            //Quartz framework
+            builder.Services.AddSingleton<ISchedulerFactory, StdSchedulerFactory>();
+            builder.Services.AddSingleton<IJobFactory, SingletonJobFactory>();
+
+            builder.Services.AddSingleton<CpuMetricJob>();
+            builder.Services.AddSingleton(new JobSchedule(typeof(CpuMetricJob), "0/5 * * ? * * *"));
+
+            builder.Services.AddSingleton<HddMetricJob>();
+            builder.Services.AddSingleton(new JobSchedule(typeof(HddMetricJob), "0/5 * * ? * * *"));
+
+            builder.Services.AddSingleton<RamMetricJob>();
+            builder.Services.AddSingleton(new JobSchedule(typeof(RamMetricJob), "0/5 * * ? * * *"));
+
+            //builder.Services.AddSingleton<DontnetMetricJob>();
+            //builder.Services.AddSingleton(new JobSchedule(typeof(DontnetMetricJob), "0/5 * * ? * * *"));
+
+            builder.Services.AddSingleton<NetworkMetricJob>();
+            builder.Services.AddSingleton(new JobSchedule(typeof(NetworkMetricJob), "0/15 * * ? * * *"));
+
+            builder.Services.AddHostedService<QuartzHostedService>();
+            #endregion
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -87,6 +124,10 @@ namespace MetricsAgent
 
             var app = builder.Build();
 
+            using var serviceScoped = app.Services.CreateScope();
+            var services = serviceScoped.ServiceProvider;
+            var migrationRunner = services.GetRequiredService<IMigrationRunner>();
+
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
@@ -99,36 +140,9 @@ namespace MetricsAgent
 
             app.MapControllers();
 
+            migrationRunner.MigrateUp();
+
             app.Run();
-        }
-
-        private static void ConfigureSqlLiteDb()
-        {
-            const string connectionString = "Data Source = metrics.db; Version = 3; Pooling = true; Max Pool Size = 100;";
-            var cmd = new SQLiteConnection(connectionString);
-
-            // Дропнуть таблицу если такая уже существует
-            cmd.Execute("DROP TABLE IF EXISTS cpumetrics");
-            cmd.Execute("DROP TABLE IF EXISTS dotnetmetrics");
-            cmd.Execute("DROP TABLE IF EXISTS hddmetrics");
-            cmd.Execute("DROP TABLE IF EXISTS networkmetrics");
-            cmd.Execute("DROP TABLE IF EXISTS rammetrics");
-            //Создать таблицу
-            cmd.Execute(@"CREATE TABLE cpumetrics(id INTEGER
-                    PRIMARY KEY,
-                    value INT, time INT)");
-            cmd.Execute(@"CREATE TABLE dotnetmetrics(id INTEGER
-                    PRIMARY KEY,
-                    value INT, time INT)");
-            cmd.Execute(@"CREATE TABLE hddmetrics(id INTEGER
-                    PRIMARY KEY,
-                    value INT, time INT)");
-            cmd.Execute(@"CREATE TABLE networkmetrics(id INTEGER
-                    PRIMARY KEY,
-                    value INT, time INT)");
-            cmd.Execute(@"CREATE TABLE rammetrics(id INTEGER
-                    PRIMARY KEY,
-                    value INT, time INT)");
         }
     }
 }

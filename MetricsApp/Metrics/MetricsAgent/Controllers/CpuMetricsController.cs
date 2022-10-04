@@ -25,13 +25,19 @@ namespace MetricsAgent.Controllers
             _mapper = mapper;
         }
 
-        [HttpPost("create")]
-        public IActionResult Create([FromBody] CpuMetricCreateRequest request)
-        {
-            _logger.LogInformation("Create cpu metric.");
-            _cpuMetricsRepository.Create(_mapper.Map<CpuMetric>(request));
-            return Ok();
-        }
+        // Уже не надо, почикать везде
+
+        //[HttpPost("create")]
+        //public IActionResult Create([FromBody] CpuMetricCreateRequest request)
+        //{
+        //    _logger.LogInformation("Create cpu metric.");
+        //    _cpuMetricsRepository.Create(_mapper.Map<CpuMetric>(request));
+        //    return Ok();
+        //}
+
+        [HttpGet("All")]
+        public ActionResult<IList<CpuMetricDto>> GetCpuMetricsAll() => 
+            Ok(_mapper.Map<List<CpuMetricDto>>(_cpuMetricsRepository.GetAll()));
 
 
         [HttpGet("from/{fromTime}/to/{toTime}")]

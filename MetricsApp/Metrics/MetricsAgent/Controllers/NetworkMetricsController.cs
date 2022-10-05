@@ -25,13 +25,10 @@ namespace MetricsAgent.Controllers
             _mapper = mapper;
         }
 
-        [HttpPost("create")]
-        public IActionResult Create([FromBody] NetworkMetricCreateRequest request)
-        {
-            _logger.LogInformation("Create network metric.");
-            _networkMetricsRepository.Create(_mapper.Map<NetworkMetric>(request));
-            return Ok();
-        }
+        [HttpGet("All")]
+        public ActionResult<IList<NetworkMetricDto>> GetNetworkMetricsAll() =>
+            Ok(_mapper.Map<List<NetworkMetricDto>>(_networkMetricsRepository.GetAll()));
+
         [HttpGet("from/{fromTime}/to/{toTime}")]
         public ActionResult<IList<NetworkMetricDto>> GetNetworkMetrics([FromRoute] TimeSpan fromTime, [FromRoute] TimeSpan toTime)
         {

@@ -25,13 +25,10 @@ namespace MetricsAgent.Controllers
             _mapper = mapper;
         }
 
-        [HttpPost("create")]
-        public IActionResult Create([FromBody] HddMetricCreateRequest request)
-        {
-            _logger.LogInformation("Create hdd metric.");
-            _hddMetricsRepository.Create(_mapper.Map<HddMetric>(request));
-            return Ok();
-        }
+        [HttpGet("All")]
+        public ActionResult<IList<HddMetricDto>> GetHddMetricsAll() =>
+             Ok(_mapper.Map<List<HddMetricDto>>(_hddMetricsRepository.GetAll()));
+
         [HttpGet("from/{fromTime}/to/{toTime}")]
         public ActionResult<IList<HddMetricDto>> GetHddMetrics([FromRoute] TimeSpan fromTime, [FromRoute] TimeSpan toTime)
         {

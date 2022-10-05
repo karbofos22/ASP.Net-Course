@@ -25,13 +25,10 @@ namespace MetricsAgent.Controllers
             _mapper = mapper;
         }
 
-        [HttpPost("create")]
-        public IActionResult Create([FromBody] RamMetricCreateRequest request)
-        {
-            _logger.LogInformation("Create ram metric.");
-            _ramMetricsRepository.Create(_mapper.Map<RamMetric>(request));
-            return Ok();
-        }
+        [HttpGet("All")]
+        public ActionResult<IList<RamMetricDto>> GetRamMetricsAll() =>
+            Ok(_mapper.Map<List<RamMetricDto>>(_ramMetricsRepository.GetAll()));
+
         [HttpGet("from/{fromTime}/to/{toTime}")]
         public ActionResult<IList<RamMetricDto>> GetRamMetrics([FromRoute] TimeSpan fromTime, [FromRoute] TimeSpan toTime)
         {

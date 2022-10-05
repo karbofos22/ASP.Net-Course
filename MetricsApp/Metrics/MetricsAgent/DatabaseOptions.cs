@@ -1,7 +1,11 @@
-﻿namespace MetricsAgent
+﻿using System.Runtime.CompilerServices;
+
+namespace MetricsAgent
 {
     public class DatabaseOptions
     {
         public string ConnectionString { get; set; }
     }
+
+    
 }

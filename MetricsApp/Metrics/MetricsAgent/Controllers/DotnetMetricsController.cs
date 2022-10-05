@@ -25,14 +25,9 @@ namespace MetricsAgent.Controllers
             _mapper = mapper;
         }
 
-        [HttpPost("create")]
-        public IActionResult Create([FromBody] DotnetMetricCreateRequest request)
-        {
-            _logger.LogInformation("Create dotnet metric.");
-            _dotnetMetricsRepository.Create(_mapper.Map<DotnetMetric>(request));
-            return Ok();
-        }
-
+        [HttpGet("All")]
+        public ActionResult<IList<DotnetMetricDto>> GetDotnetMetricsAll() =>
+            Ok(_mapper.Map<List<DotnetMetricDto>>(_dotnetMetricsRepository.GetAll()));
 
         [HttpGet("from/{fromTime}/to/{toTime}")]
         public ActionResult<IList<DotnetMetricDto>> GetDotnetMetrics([FromRoute] TimeSpan fromTime, [FromRoute] TimeSpan toTime)

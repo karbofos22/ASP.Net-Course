@@ -30,10 +30,14 @@ namespace MetricsAgent.Controllers
             Ok(_mapper.Map<List<RamMetricDto>>(_ramMetricsRepository.GetAll()));
 
         [HttpGet("from/{fromTime}/to/{toTime}")]
-        public ActionResult<IList<RamMetricDto>> GetRamMetrics([FromRoute] TimeSpan fromTime, [FromRoute] TimeSpan toTime)
+        public ActionResult<GetRamMetricsResponse> GetRamMetrics([FromRoute] TimeSpan fromTime, [FromRoute] TimeSpan toTime)
         {
             _logger.LogInformation("Get ram metrics call.");
-            return Ok(_mapper.Map<List<RamMetricDto>>(_ramMetricsRepository.GetByTimePeriod(fromTime, toTime)));
+            return Ok(new GetRamMetricsResponse
+            {
+                Metrics = _ramMetricsRepository.GetByTimePeriod(fromTime, toTime)
+                        .Select(metric => _mapper.Map<RamMetricDto>(metric)).ToList()
+            });
         }
     }
 }

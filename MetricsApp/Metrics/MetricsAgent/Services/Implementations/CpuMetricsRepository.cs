@@ -45,10 +45,7 @@ namespace MetricsAgent.Services.Implementations
 
         public CpuMetric GetById(int id)
         {
-            using var connection = new SQLiteConnection(_datadaseOptions.Value.ConnectionString);
-
-            return connection.QuerySingle<CpuMetric>("SELECT Id, Time, Value FROM cpumetrics WHERE id = @id",
-            new { id = id });
+            throw new NotImplementedException();
         }
 
         /// <summary>

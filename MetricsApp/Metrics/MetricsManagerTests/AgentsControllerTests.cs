@@ -1,5 +1,5 @@
-﻿using MetricsManager.Controllers;
-using MetricsManager.Models;
+﻿using MetricsManager.Agents;
+using MetricsManager.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;

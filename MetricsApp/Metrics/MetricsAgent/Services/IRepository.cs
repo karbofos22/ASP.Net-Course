@@ -1,6 +1,4 @@
-﻿using MetricsAgent.Models;
-
-namespace MetricsAgent.Services
+﻿namespace MetricsAgent.Services
 {
     public interface IRepository<T> where T : class
     {

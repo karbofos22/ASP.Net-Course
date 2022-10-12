@@ -1,13 +1,9 @@
-﻿namespace MetricsAgent.Jobs
+﻿using FluentMigrator.Runner.Processors;
+using Quartz;
+using Quartz.Spi;
+
+namespace MetricsManager.Jobs
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using MetricsAgent.Services;
-    using Microsoft.Extensions.Hosting;
-    using Quartz;
-    using Quartz.Spi;
     public class QuartzHostedService : IHostedService
     {
         private readonly ISchedulerFactory _schedulerFactory;
@@ -58,5 +54,4 @@
             .Build();
         }
     }
-
 }

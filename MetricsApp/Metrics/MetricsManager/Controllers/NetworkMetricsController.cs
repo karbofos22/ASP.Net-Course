@@ -30,9 +30,9 @@ namespace MetricsManager.Controllers
 
         #endregion
 
-        [HttpGet("agent/{agentId}/from/{fromTime}/to/{toTime}")]
+        [HttpGet("getAll-by-id")]
         public ActionResult<NetworkMetricsResponse> GetMetricsFromAgent(
-            [FromRoute] int agentId, [FromRoute] TimeSpan fromTime, [FromRoute] TimeSpan toTime)
+            [FromQuery] int agentId, [FromQuery] TimeSpan fromTime, [FromQuery] TimeSpan toTime)
         {
             return Ok(_metricsAgentClient.GetNetworkMetrics(new NetworkMetricRequest
             {
@@ -42,9 +42,9 @@ namespace MetricsManager.Controllers
             }));
         }
 
-        [HttpGet("all/from/{fromTime}/to/{toTime}")]
+        [HttpGet("get-all")]
         public IActionResult GetMetricsFromAll(
-            [FromRoute] TimeSpan fromTime, [FromRoute] TimeSpan toTime)
+            [FromQuery] TimeSpan fromTime, [FromQuery] TimeSpan toTime)
         {
             return Ok();
         }

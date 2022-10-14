@@ -22,7 +22,7 @@ namespace MetricsManager.Jobs
 
         public Task Execute(IJobExecutionContext context)
         {
-           //var data1 = _cpuMetricsController.GetMetricsFromAgent()
+            //var data1 = _cpuMetricsController.GetMetricsFromAgent();
 
             //Debug.WriteLine($"{DateTime.Now} cpumetrics job");
             //_agentsRepository.Create(new Models.CpuMetric

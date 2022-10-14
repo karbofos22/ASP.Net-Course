@@ -34,9 +34,9 @@ namespace MetricsManager.Controllers
 
         #endregion
 
-        [HttpGet("agent/{agentId}/from/{fromTime}/to/{toTime}")]
+        [HttpGet("getAll-by-id")]
         public ActionResult<CpuMetricsResponse> GetMetricsFromAgent(
-            [FromRoute] int agentId, [FromRoute] TimeSpan fromTime, [FromRoute] TimeSpan toTime)
+            [FromQuery] int agentId, [FromQuery] TimeSpan fromTime, [FromQuery] TimeSpan toTime)
         {
             return Ok(_metricsAgentClient.GetCpuMetrics(new CpuMetricRequest
             {
@@ -48,39 +48,9 @@ namespace MetricsManager.Controllers
 
 
 
-        [HttpGet("agent-old/{agentId}/from/{fromTime}/to/{toTime}")]
-        public ActionResult<CpuMetricsResponse> GetMetricsFromAgentOld(
-           [FromRoute] int agentId, [FromRoute] TimeSpan fromTime, [FromRoute] TimeSpan toTime)
-        {
-            AgentInfo agent = _agentsRepository.GetAll().FirstOrDefault(agent => agent.AgentId == agentId);
-            if (agent == null)
-            {
-                return BadRequest();
-            }
-
-            string reguestStr = $"{agent.AgentAddress}api/metrics/cpu/from/{fromTime.ToString("dd\\.hh\\:mm\\:ss")}" +
-                                $"/to/{toTime.ToString("dd\\.hh\\:mm\\:ss")}";
-            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, reguestStr);
-
-            httpRequestMessage.Headers.Add("Accept", "application/json");
-            HttpClient httpClient = _httpClientFactory.CreateClient();
-            HttpResponseMessage response =  httpClient.Send(httpRequestMessage);
-            if (response.IsSuccessStatusCode)
-            {
-                string responseStr = response.Content.ReadAsStringAsync().Result;
-                CpuMetricsResponse cpuMetricsResponse = 
-                (CpuMetricsResponse)JsonConvert.DeserializeObject(responseStr, typeof(CpuMetricsResponse));
-                cpuMetricsResponse.AgentId = agentId;
-                return Ok(cpuMetricsResponse);
-            }
-
-
-            return BadRequest();
-        }
-
-        [HttpGet("all/from/{fromTime}/to/{toTime}")]
+        [HttpGet("get-all")]
         public IActionResult GetMetricsFromAll(
-            [FromRoute] TimeSpan fromTime, [FromRoute] TimeSpan toTime)
+            [FromQuery] TimeSpan fromTime, [FromQuery] TimeSpan toTime)
         {
             return Ok();
         }

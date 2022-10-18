@@ -1,0 +1,17 @@
+﻿<Window x:Class="MetricsManager.WpfClient.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MetricsManager.WpfClient"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="839" Width="963">
+    <Grid x:Name="sta">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="0*"/>
+            <ColumnDefinition Width="0*"/>
+        </Grid.ColumnDefinitions>
+        <local:CpuChart HorizontalAlignment="Center" Margin="0,10,0,0" VerticalAlignment="Top" Height="256" Width="943"/>
+    </Grid>
+</Window>
